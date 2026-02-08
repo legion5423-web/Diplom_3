@@ -1,24 +1,23 @@
 package tests;
 
+import io.qameta.allure.Description;
+import io.qameta.allure.Step;
+import io.qameta.allure.junit4.DisplayName;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.openqa.selenium.WebDriver;
-import pages.MainPage;
 import pages.ConstructorPage;
+import pages.MainPage;
 import util.DriverFactory;
+
 import java.util.Arrays;
 import java.util.Collection;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-
-// Импорты для Allure
-import io.qameta.allure.junit4.DisplayName;
-import io.qameta.allure.Description;
-import io.qameta.allure.Step;
 
 @RunWith(Parameterized.class)
 public class ConstructorTests {

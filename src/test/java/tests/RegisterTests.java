@@ -1,30 +1,22 @@
 package tests;
 
+import io.qameta.allure.*;
+import io.qameta.allure.junit4.DisplayName;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.openqa.selenium.WebDriver;
-import pages.MainPage;
 import pages.ConstructorPage;
+import pages.MainPage;
 import pages.RegisterPage;
 import util.DriverFactory;
+
 import java.util.Arrays;
 import java.util.Collection;
 
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
-
-// Импорты для Allure
-import io.qameta.allure.junit4.DisplayName;
-import io.qameta.allure.Description;
-import io.qameta.allure.Step;
-import io.qameta.allure.Epic;
-import io.qameta.allure.Feature;
-import io.qameta.allure.Story;
-import io.qameta.allure.Severity;
-import io.qameta.allure.SeverityLevel;
 
 @Epic("Регистрация")
 @Feature("Создание аккаунта")
