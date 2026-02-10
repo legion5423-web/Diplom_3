@@ -1,22 +1,32 @@
 package tests;
 
-import io.qameta.allure.*;
-import io.qameta.allure.junit4.DisplayName;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.openqa.selenium.WebDriver;
-import pages.ConstructorPage;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import pages.MainPage;
+import pages.LoginPage;
 import pages.RegisterPage;
 import util.DriverFactory;
-
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
+
+import io.qameta.allure.junit4.DisplayName;
+import io.qameta.allure.Description;
+import io.qameta.allure.Step;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
+import io.qameta.allure.Story;
+import io.qameta.allure.Severity;
+import io.qameta.allure.SeverityLevel;
 
 @Epic("Регистрация")
 @Feature("Создание аккаунта")
@@ -24,29 +34,26 @@ import static org.junit.Assert.assertTrue;
 public class RegisterTests {
 
     private WebDriver driver;
+    private WebDriverWait wait;
     private MainPage mainPage;
-    private ConstructorPage constructorPage;
+    private LoginPage loginPage;
     private RegisterPage registerPage;
 
-    private String browser;
     private String password;
     private boolean shouldPass;
 
-    public RegisterTests(String browser, String password, boolean shouldPass) {
-        this.browser = browser;
+    public RegisterTests(String password, boolean shouldPass) {
         this.password = password;
         this.shouldPass = shouldPass;
     }
 
-    @Parameterized.Parameters(name = "Браузер: {0}, Пароль: {1}, Ожидается: {2}")
+    @Parameterized.Parameters(name = "Пароль: {0}, Ожидается успех: {1}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {"chrome", "123456", true},        // Минимальная длина - должен пройти
-                {"chrome", "12345", false},        // Слишком короткий - ошибка
-                {"chrome", "password123", true},   // Нормальный пароль
-                {"yandex", "123456", true},
-                {"yandex", "123", false},
-                {"yandex", "strongpass", true}
+                {"123456", true},        // Минимальная длина - должен пройти
+                {"12345", false},        // Слишком короткий - ошибка
+                {"password123", true},   // Нормальный пароль
+                {"StrongPass!2024", true} // Сложный пароль
         });
     }
 
@@ -54,18 +61,23 @@ public class RegisterTests {
     @DisplayName("Подготовка к тесту регистрации")
     @Description("Настройка тестового окружения и переход на страницу регистрации")
     public void setUp() {
-        driver = DriverFactory.createDriver(browser);
+        driver = DriverFactory.createDriver();
+        wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         mainPage = new MainPage(driver);
-        constructorPage = new ConstructorPage(driver);
+        loginPage = new LoginPage(driver);
         registerPage = new RegisterPage(driver);
 
         mainPage.open();
         mainPage.waitForLoad();
         mainPage.acceptCookies();
 
-        // Переходим на страницу регистрации
-        constructorPage.clickLoginToAccountButton();
-        driver.get("https://stellarburgers.education-services.ru/register");
+        // Переходим на страницу регистрации через главную страницу
+        mainPage.clickLoginToAccountButton();
+        loginPage.waitForLoad();
+        loginPage.clickRegisterLink();
+
+        // Ждем загрузки страницы регистрации
+        registerPage.waitForLoad();
     }
 
     @Test
@@ -73,11 +85,10 @@ public class RegisterTests {
     @Description("Проверка регистрации с корректными и некорректными паролями")
     @Severity(SeverityLevel.CRITICAL)
     @Story("Валидация пароля при регистрации")
-    public void testRegistration() throws InterruptedException {
+    public void testRegistration() {
         String name = generateTestName();
         String email = generateTestEmail();
 
-        registerPage.waitForLoad();
         registerPage.register(name, email, password);
 
         if (shouldPass) {
@@ -98,16 +109,20 @@ public class RegisterTests {
     }
 
     @Step("Проверка успешной регистрации")
-    private void verifySuccessfulRegistration() throws InterruptedException {
-        Thread.sleep(2000); // Ждем редирект
-        boolean isNotOnRegisterPage = !driver.getCurrentUrl().contains("/register");
-        assertTrue("Должна быть успешная регистрация. Текущий URL: " + driver.getCurrentUrl(),
-                isNotOnRegisterPage);
+    private void verifySuccessfulRegistration() {
+        // Ждем редиректа на страницу логина после успешной регистрации
+        wait.until(ExpectedConditions.urlContains("login"));
+
+        boolean isOnLoginPage = driver.getCurrentUrl().contains("login");
+        assertTrue("Должна быть успешная регистрация и редирект на страницу логина. Текущий URL: " + driver.getCurrentUrl(),
+                isOnLoginPage);
     }
 
     @Step("Проверка ошибки при регистрации")
-    private void verifyRegistrationError() throws InterruptedException {
-        Thread.sleep(1000);
+    private void verifyRegistrationError() {
+        // Ждем появления ошибки пароля
+        wait.until(d -> registerPage.isPasswordErrorDisplayed());
+
         boolean isErrorDisplayed = registerPage.isPasswordErrorDisplayed();
         assertTrue("Должна появиться ошибка пароля. Пароль: " + password,
                 isErrorDisplayed);

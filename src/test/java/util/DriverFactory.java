@@ -3,13 +3,14 @@ package util;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-
 import java.time.Duration;
 
 public class DriverFactory {
 
     public static WebDriver createDriver() {
-        return createDriver("chrome");
+        // Получаем браузер из конфигурации
+        String browser = ConfigReader.getBrowser();
+        return createDriver(browser);
     }
 
     public static WebDriver createDriver(String browser) {
@@ -28,29 +29,22 @@ public class DriverFactory {
                 driver = createChromeDriver();
         }
 
-        // Общие настройки
-        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+        // Настройки таймаутов из конфигурации
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(ConfigReader.getImplicitTimeout()));
+        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(ConfigReader.getPageLoadTimeout()));
         driver.manage().window().maximize();
 
         return driver;
     }
 
     private static WebDriver createChromeDriver() {
-        // Для Chrome 144 - используем Selenium Manager (он автоматически найдет драйвер)
-        System.out.println("Создание драйвера для Chrome...");
-
         ChromeOptions options = new ChromeOptions();
 
-        // Базовые настройки для Chrome
-        options.addArguments("--no-sandbox");
-        options.addArguments("--disable-dev-shm-usage");
-        options.addArguments("--start-maximized");
-        options.addArguments("--disable-blink-features=AutomationControlled");
-        options.addArguments("--disable-infobars");
-        options.addArguments("--disable-extensions");
-        options.addArguments("--disable-gpu");
-        options.addArguments("--disable-notifications");
-        options.addArguments("--remote-allow-origins=*");
+        // Добавляем опции из конфигурации
+        String[] chromeOptions = ConfigReader.getChromeOptions();
+        for (String option : chromeOptions) {
+            options.addArguments(option.trim());
+        }
 
         return new ChromeDriver(options);
     }

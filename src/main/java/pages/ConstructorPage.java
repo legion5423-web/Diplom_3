@@ -4,6 +4,7 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
+import io.qameta.allure.Step;
 
 public class ConstructorPage extends BasePage {
 
@@ -18,51 +19,46 @@ public class ConstructorPage extends BasePage {
     private By saucesSection = By.xpath("//h2[text()='Соусы']");
     private By fillingsSection = By.xpath("//h2[text()='Начинки']");
 
-    // Локаторы для кнопок входа
-    private By loginToAccountButton = By.xpath("//button[text()='Войти в аккаунт']");
-    private By personalAccountButton = By.xpath("//p[text()='Личный Кабинет']");
-
     public ConstructorPage(WebDriver driver) {
-        super(driver); // Вызов конструктора BasePage
+        super(driver);
     }
 
+    @Step("Дождаться загрузки конструктора")
     public void waitForLoad() {
         wait.until(ExpectedConditions.visibilityOfElementLocated(bunsSection));
     }
 
+    @Step("Нажать на вкладку 'Булки'")
     public void clickBunsTab() {
         WebElement element = wait.until(ExpectedConditions.elementToBeClickable(bunsTab));
+        scrollToElement(element);
         element.click();
         wait.until(ExpectedConditions.visibilityOfElementLocated(bunsSection));
     }
 
+    @Step("Нажать на вкладку 'Соусы'")
     public void clickSaucesTab() {
         WebElement element = wait.until(ExpectedConditions.elementToBeClickable(saucesTab));
+        scrollToElement(element);
         element.click();
         wait.until(ExpectedConditions.visibilityOfElementLocated(saucesSection));
     }
 
+    @Step("Нажать на вкладку 'Начинки'")
     public void clickFillingsTab() {
         WebElement element = wait.until(ExpectedConditions.elementToBeClickable(fillingsTab));
+        scrollToElement(element);
         element.click();
         wait.until(ExpectedConditions.visibilityOfElementLocated(fillingsSection));
     }
 
-    public void clickLoginToAccountButton() {
-        WebElement element = wait.until(ExpectedConditions.elementToBeClickable(loginToAccountButton));
-        element.click();
-    }
-
-    public void clickPersonalAccountButton() {
-        WebElement element = wait.until(ExpectedConditions.elementToBeClickable(personalAccountButton));
-        element.click();
-    }
-
+    @Step("Получить текст активной вкладки")
     public String getActiveTabText() {
         WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(activeTab));
         return element.getText();
     }
 
+    @Step("Проверить видимость секции 'Булки'")
     public boolean isBunsSectionVisible() {
         try {
             WebElement element = driver.findElement(bunsSection);
@@ -72,6 +68,7 @@ public class ConstructorPage extends BasePage {
         }
     }
 
+    @Step("Проверить видимость секции 'Соусы'")
     public boolean isSaucesSectionVisible() {
         try {
             WebElement element = driver.findElement(saucesSection);
@@ -81,6 +78,7 @@ public class ConstructorPage extends BasePage {
         }
     }
 
+    @Step("Проверить видимость секции 'Начинки'")
     public boolean isFillingsSectionVisible() {
         try {
             WebElement element = driver.findElement(fillingsSection);
