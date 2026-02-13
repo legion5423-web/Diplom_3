@@ -77,6 +77,11 @@ public class RegisterPage extends BasePage {
         }
     }
 
+    @Step("Дождаться появления ошибки пароля")
+    public void waitForPasswordError() {
+        wait.until(ExpectedConditions.visibilityOfElementLocated(passwordError));
+    }
+
     @Step("Получить текст ошибки пароля")
     public String getPasswordErrorText() {
         try {
@@ -87,8 +92,13 @@ public class RegisterPage extends BasePage {
         }
     }
 
-    @Step("Дождаться появления ошибки пароля")
-    public void waitForPasswordError() {
-        wait.until(ExpectedConditions.visibilityOfElementLocated(passwordError));
+    @Step("Дождаться редиректа на страницу логина")
+    public void waitForRedirectToLogin() {
+        wait.until(ExpectedConditions.urlContains("login"));
+    }
+
+    @Step("Проверить, что текущий URL содержит текст: {text}")
+    public boolean isUrlContains(String text) {
+        return driver.getCurrentUrl().contains(text);
     }
 }

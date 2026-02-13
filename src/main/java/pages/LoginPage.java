@@ -75,6 +75,11 @@ public class LoginPage extends BasePage {
         }
     }
 
+    @Step("Дождаться появления сообщения об ошибке")
+    public void waitForErrorMessage() {
+        wait.until(ExpectedConditions.visibilityOfElementLocated(errorMessage));
+    }
+
     @Step("Получить текст сообщения об ошибке")
     public String getErrorMessageText() {
         try {
@@ -103,5 +108,10 @@ public class LoginPage extends BasePage {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    @Step("Дождаться редиректа на страницу восстановления пароля")
+    public void waitForForgotPasswordPage() {
+        wait.until(ExpectedConditions.urlContains("forgot-password"));
     }
 }

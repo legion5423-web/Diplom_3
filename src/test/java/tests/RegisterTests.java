@@ -1,18 +1,17 @@
 package tests;
 
+import api.UserApiClient;
+import api.model.User;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
 import pages.MainPage;
 import pages.LoginPage;
 import pages.RegisterPage;
 import util.DriverFactory;
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -34,10 +33,14 @@ import io.qameta.allure.SeverityLevel;
 public class RegisterTests {
 
     private WebDriver driver;
-    private WebDriverWait wait;
     private MainPage mainPage;
     private LoginPage loginPage;
     private RegisterPage registerPage;
+
+    // Для удаления созданного пользователя
+    private UserApiClient userApiClient;
+    private String createdEmail;
+    private String createdPassword;
 
     private String password;
     private boolean shouldPass;
@@ -62,10 +65,12 @@ public class RegisterTests {
     @Description("Настройка тестового окружения и переход на страницу регистрации")
     public void setUp() {
         driver = DriverFactory.createDriver();
-        wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         mainPage = new MainPage(driver);
         loginPage = new LoginPage(driver);
         registerPage = new RegisterPage(driver);
+
+        // Инициализируем API клиент для удаления пользователя
+        userApiClient = new UserApiClient();
 
         mainPage.open();
         mainPage.waitForLoad();
@@ -89,6 +94,12 @@ public class RegisterTests {
         String name = generateTestName();
         String email = generateTestEmail();
 
+        // Сохраняем данные созданного пользователя для последующего удаления
+        if (shouldPass) {
+            this.createdEmail = email;
+            this.createdPassword = password;
+        }
+
         registerPage.register(name, email, password);
 
         if (shouldPass) {
@@ -110,28 +121,54 @@ public class RegisterTests {
 
     @Step("Проверка успешной регистрации")
     private void verifySuccessfulRegistration() {
-        // Ждем редиректа на страницу логина после успешной регистрации
-        wait.until(ExpectedConditions.urlContains("login"));
+        // Используем метод из RegisterPage для ожидания редиректа
+        registerPage.waitForRedirectToLogin();
 
-        boolean isOnLoginPage = driver.getCurrentUrl().contains("login");
+        // Проверяем, что перешли на страницу логина
+        boolean isOnLoginPage = registerPage.isUrlContains("login");
         assertTrue("Должна быть успешная регистрация и редирект на страницу логина. Текущий URL: " + driver.getCurrentUrl(),
                 isOnLoginPage);
     }
 
     @Step("Проверка ошибки при регистрации")
     private void verifyRegistrationError() {
-        // Ждем появления ошибки пароля
-        wait.until(d -> registerPage.isPasswordErrorDisplayed());
+        // Используем метод из RegisterPage для ожидания ошибки
+        registerPage.waitForPasswordError();
 
+        // Проверяем, что ошибка отображается
         boolean isErrorDisplayed = registerPage.isPasswordErrorDisplayed();
         assertTrue("Должна появиться ошибка пароля. Пароль: " + password,
                 isErrorDisplayed);
+
+        // При ошибке регистрации пользователь не создается, поэтому не нужно его удалять
+        createdEmail = null;
     }
 
     @After
     @DisplayName("Завершение теста регистрации")
-    @Description("Закрытие браузера")
+    @Description("Удаление созданного пользователя через API и закрытие браузера")
     public void tearDown() {
+        // 1. Удаляем созданного пользователя через API (только если регистрация была успешной)
+        if (shouldPass && createdEmail != null && createdPassword != null) {
+            try {
+                // Создаем временного клиента для удаления пользователя
+                UserApiClient cleanupClient = new UserApiClient();
+
+                // Входим под созданным пользователем, чтобы получить токен
+                // Для этого нам нужно создать объект User с email и password
+                // и использовать метод loginUser() который мы добавим в UserApiClient
+                cleanupClient.loginWithCredentials(createdEmail, createdPassword);
+
+                // Удаляем пользователя
+                cleanupClient.deleteUser();
+                System.out.println("Пользователь удален после теста: " + createdEmail);
+            } catch (Exception e) {
+                System.err.println("Не удалось удалить пользователя: " + createdEmail);
+                e.printStackTrace();
+            }
+        }
+
+        // 2. Закрываем браузер
         if (driver != null) {
             driver.quit();
         }

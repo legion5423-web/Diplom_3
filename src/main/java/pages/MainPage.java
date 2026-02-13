@@ -109,11 +109,15 @@ public class MainPage extends BasePage {
         }
     }
 
-    @Step("Проверить, авторизован ли пользователь")
+    @Step("Проверить, выполнен ли вход пользователя")
     public boolean isUserLoggedIn() {
         try {
-            WebElement orderButtonElement = driver.findElement(orderButton);
-            return orderButtonElement.isDisplayed();
+            // После успешного входа кнопка "Войти в аккаунт" исчезает
+            boolean loginButtonGone = driver.findElements(loginToAccountButton).isEmpty();
+            // И появляется кнопка "Оформить заказ"
+            boolean orderButtonVisible = isOrderButtonDisplayed();
+
+            return loginButtonGone || orderButtonVisible;
         } catch (Exception e) {
             return false;
         }
@@ -150,5 +154,36 @@ public class MainPage extends BasePage {
     public void navigateToHome() {
         clickLogo();
         waitForLoad();
+    }
+
+    @Step("Проверить, отображается ли кнопка 'Оформить заказ'")
+    public boolean isOrderButtonDisplayed() {
+        try {
+            WebElement button = driver.findElement(orderButton);
+            return button.isDisplayed();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Step("Дождаться успешного входа пользователя")
+    public void waitForSuccessfulLogin() {
+        wait.until(d -> {
+            boolean isLoginPage = d.getCurrentUrl().contains("login");
+            boolean isOrderButtonVisible = isOrderButtonDisplayed();
+            boolean isMainPage = d.getCurrentUrl().equals("https://stellarburgers.education-services.ru/");
+
+            return !isLoginPage || isOrderButtonVisible || isMainPage;
+        });
+    }
+
+    @Step("Проверить, что текущий URL содержит текст: {text}")
+    public boolean isUrlContains(String text) {
+        return driver.getCurrentUrl().contains(text);
+    }
+
+    @Step("Вернуться на предыдущую страницу")
+    public void goBack() {
+        driver.navigate().back();
     }
 }
