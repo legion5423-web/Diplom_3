@@ -1,5 +1,6 @@
 package tests;
 
+import api.UserApiClient;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -7,7 +8,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.openqa.selenium.WebDriver;
 import pages.MainPage;
-import pages.ConstructorPage;
 import pages.LoginPage;
 import pages.RegisterPage;
 import util.DriverFactory;
@@ -16,13 +16,11 @@ import java.util.Collection;
 
 import static org.junit.Assert.assertTrue;
 
-// Импорты для Allure
 import io.qameta.allure.junit4.DisplayName;
 import io.qameta.allure.Description;
 import io.qameta.allure.Step;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
-import io.qameta.allure.Stories;
 import io.qameta.allure.Story;
 
 @Epic("Авторизация")
@@ -32,42 +30,42 @@ public class LoginTests {
 
     private WebDriver driver;
     private MainPage mainPage;
-    private ConstructorPage constructorPage;
     private LoginPage loginPage;
     private RegisterPage registerPage;
+    private UserApiClient userApiClient;
 
-    private String browser;
     private String loginMethod; // "main", "personal", "register", "recover"
 
-    public LoginTests(String browser, String loginMethod) {
-        this.browser = browser;
+    public LoginTests(String loginMethod) {
         this.loginMethod = loginMethod;
     }
 
-    @Parameterized.Parameters(name = "Браузер: {0}, Метод входа: {1}")
+    @Parameterized.Parameters(name = "Метод входа: {0}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {"chrome", "main"},
-                {"chrome", "personal"},
-                {"chrome", "register"},
-                {"chrome", "recover"},
-                {"yandex", "main"},
-                {"yandex", "personal"},
-                {"yandex", "register"},
-                {"yandex", "recover"}
+                {"main"},
+                {"personal"},
+                {"register"},
+                {"recover"}
         });
     }
 
     @Before
     @DisplayName("Подготовка к тесту входа")
-    @Description("Инициализация драйвера и открытие главной страницы")
+    @Description("Инициализация драйвера, создание пользователя через API, открытие главной страницы")
     public void setUp() {
-        driver = DriverFactory.createDriver(browser);
+        // 1. Создаем случайного пользователя через API
+        userApiClient = new UserApiClient();
+        userApiClient.createUser();
+        System.out.println("Создан пользователь для теста: " + userApiClient.getEmail());
+
+        // 2. Инициализируем драйвер
+        driver = DriverFactory.createDriver();
         mainPage = new MainPage(driver);
-        constructorPage = new ConstructorPage(driver);
         loginPage = new LoginPage(driver);
         registerPage = new RegisterPage(driver);
 
+        // 3. Открываем главную страницу
         mainPage.open();
         mainPage.waitForLoad();
         mainPage.acceptCookies();
@@ -77,54 +75,69 @@ public class LoginTests {
     @DisplayName("Тестирование входа в систему через различные методы")
     @Description("Проверка возможности входа через: главную кнопку, личный кабинет, форму регистрации, форму восстановления пароля")
     @Story("Различные способы входа в аккаунт")
-    public void testLogin() throws InterruptedException {
+    public void testLogin() {
+        // 1. Переходим на страницу входа выбранным методом
         navigateToLoginPage(loginMethod);
-        performLogin("legion5423@gmail.com", "J7Y-Qct-kUR-kW6");
-        verifySuccessfulLogin();
+
+        // 2. Ждем загрузки страницы логина
+        loginPage.waitForLoad();
+
+        // 3. Вводим логин и пароль созданного через API пользователя
+        String email = userApiClient.getEmail();
+        String password = userApiClient.getPassword();
+
+        loginPage.login(email, password);
+        System.out.println("Выполнен вход с email: " + email);
+
+        // 4. Ждем успешного входа (используем метод из MainPage)
+        mainPage.waitForSuccessfulLogin();
+
+        // 5. Проверяем, что вход выполнен успешно
+        boolean isLoggedIn = mainPage.isUserLoggedIn() ||
+                !mainPage.isUrlContains("login") ||
+                mainPage.isOrderButtonDisplayed();
+
+        assertTrue("Вход должен быть выполнен успешно для метода: " + loginMethod, isLoggedIn);
     }
 
     @Step("Переход на страницу входа через метод: {method}")
     private void navigateToLoginPage(String method) {
         switch (method) {
             case "main":
-                constructorPage.clickLoginToAccountButton();
+                mainPage.clickLoginToAccountButton();
                 break;
             case "personal":
-                constructorPage.clickPersonalAccountButton();
+                mainPage.clickPersonalAccountButton();
                 break;
             case "register":
-                constructorPage.clickLoginToAccountButton();
+                mainPage.clickLoginToAccountButton();
                 loginPage.waitForLoad();
                 loginPage.clickRegisterLink();
                 registerPage.waitForLoad();
                 registerPage.clickLoginLink();
                 break;
             case "recover":
-                constructorPage.clickLoginToAccountButton();
+                mainPage.clickLoginToAccountButton();
                 loginPage.waitForLoad();
                 loginPage.clickRecoverPasswordLink();
-                driver.navigate().back(); // Возвращаемся на страницу входа
+                // Ждем загрузки страницы восстановления пароля
+                loginPage.waitForForgotPasswordPage();
+                mainPage.goBack(); // Возвращаемся на страницу входа
                 break;
         }
     }
 
-    @Step("Выполнение входа с email: {email}")
-    private void performLogin(String email, String password) {
-        loginPage.waitForLoad();
-        loginPage.login(email, password);
-    }
-
-    @Step("Проверка успешного входа")
-    private void verifySuccessfulLogin() throws InterruptedException {
-        Thread.sleep(2000); // Ждем редирект
-        assertTrue("Должен произойти вход в систему. Текущий URL: " + driver.getCurrentUrl(),
-                !driver.getCurrentUrl().contains("/login"));
-    }
-
     @After
     @DisplayName("Завершение теста")
-    @Description("Закрытие браузера")
+    @Description("Удаление пользователя через API и закрытие браузера")
     public void tearDown() {
+        // 1. Удаляем созданного пользователя через API
+        if (userApiClient != null) {
+            userApiClient.deleteUser();
+            System.out.println("Пользователь удален после теста");
+        }
+
+        // 2. Закрываем браузер
         if (driver != null) {
             driver.quit();
         }

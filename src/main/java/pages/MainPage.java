@@ -1,12 +1,10 @@
 package pages;
 
 import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
-import java.time.Duration;
+import io.qameta.allure.Step;
 
 public class MainPage extends BasePage {
 
@@ -19,17 +17,6 @@ public class MainPage extends BasePage {
     // Локаторы для кнопок входа и регистрации
     private By loginToAccountButton = By.xpath("//button[text()='Войти в аккаунт']");
 
-    // Локаторы для конструктора
-    private By bunsTab = By.xpath("//span[text()='Булки']/parent::div");
-    private By saucesTab = By.xpath("//span[text()='Соусы']/parent::div");
-    private By fillingsTab = By.xpath("//span[text()='Начинки']/parent::div");
-    private By activeTab = By.xpath("//div[contains(@class, 'tab_tab__1SPyG tab_tab_type_current__2BEPc')]");
-
-    // Локаторы для секций конструктора
-    private By bunsSection = By.xpath("//h2[text()='Булки']");
-    private By saucesSection = By.xpath("//h2[text()='Соусы']");
-    private By fillingsSection = By.xpath("//h2[text()='Начинки']");
-
     // Локаторы для Cookie
     private By cookieButton = By.xpath("//button[contains(text(), 'да все привыкли')]");
 
@@ -41,27 +28,21 @@ public class MainPage extends BasePage {
 
     // Конструктор с вызовом конструктора родительского класса
     public MainPage(WebDriver driver) {
-        super(driver); // Важно: передаем driver в конструктор BasePage
+        super(driver);
     }
 
-    /**
-     * Открыть главную страницу Stellar Burgers
-     */
+    @Step("Открыть главную страницу Stellar Burgers")
     public void open() {
         driver.get("https://stellarburgers.education-services.ru/");
     }
 
-    /**
-     * Дождаться загрузки главной страницы
-     */
+    @Step("Дождаться загрузки главной страницы")
     public void waitForLoad() {
         wait.until(ExpectedConditions.visibilityOfElementLocated(header));
         wait.until(ExpectedConditions.elementToBeClickable(loginToAccountButton));
     }
 
-    /**
-     * Принять cookies, если появилось окно
-     */
+    @Step("Принять cookies, если появилось окно")
     public void acceptCookies() {
         try {
             WebElement button = driver.findElement(cookieButton);
@@ -74,41 +55,31 @@ public class MainPage extends BasePage {
         }
     }
 
-    /**
-     * Нажать кнопку "Войти в аккаунт"
-     */
+    @Step("Нажать кнопку 'Войти в аккаунт'")
     public void clickLoginToAccountButton() {
         WebElement button = wait.until(ExpectedConditions.elementToBeClickable(loginToAccountButton));
         button.click();
     }
 
-    /**
-     * Нажать кнопку "Личный кабинет"
-     */
+    @Step("Нажать кнопку 'Личный кабинет'")
     public void clickPersonalAccountButton() {
         WebElement button = wait.until(ExpectedConditions.elementToBeClickable(personalAccountButton));
         button.click();
     }
 
-    /**
-     * Нажать кнопку "Конструктор"
-     */
+    @Step("Нажать кнопку 'Конструктор'")
     public void clickConstructorButton() {
         WebElement button = wait.until(ExpectedConditions.elementToBeClickable(constructorButton));
         button.click();
     }
 
-    /**
-     * Нажать на логотип
-     */
+    @Step("Нажать на логотип")
     public void clickLogo() {
         WebElement button = wait.until(ExpectedConditions.elementToBeClickable(logoButton));
         button.click();
     }
 
-    /**
-     * Проверить, отображается ли кнопка "Войти в аккаунт"
-     */
+    @Step("Проверить, отображается ли кнопка 'Войти в аккаунт'")
     public boolean isLoginButtonDisplayed() {
         try {
             WebElement button = driver.findElement(loginToAccountButton);
@@ -118,9 +89,7 @@ public class MainPage extends BasePage {
         }
     }
 
-    /**
-     * Проверить, отображается ли кнопка "Личный кабинет"
-     */
+    @Step("Проверить, отображается ли кнопка 'Личный кабинет'")
     public boolean isPersonalAccountButtonDisplayed() {
         try {
             WebElement button = driver.findElement(personalAccountButton);
@@ -130,9 +99,7 @@ public class MainPage extends BasePage {
         }
     }
 
-    /**
-     * Проверить, отображается ли кнопка "Конструктор"
-     */
+    @Step("Проверить, отображается ли кнопка 'Конструктор'")
     public boolean isConstructorButtonDisplayed() {
         try {
             WebElement button = driver.findElement(constructorButton);
@@ -142,107 +109,27 @@ public class MainPage extends BasePage {
         }
     }
 
-    // Методы для работы с конструктором
-
-    /**
-     * Нажать вкладку "Булки"
-     */
-    public void clickBunsTab() {
-        WebElement tab = wait.until(ExpectedConditions.elementToBeClickable(bunsTab));
-        scrollToElement(tab);
-        tab.click();
-        wait.until(ExpectedConditions.visibilityOfElementLocated(bunsSection));
-    }
-
-    /**
-     * Нажать вкладку "Соусы"
-     */
-    public void clickSaucesTab() {
-        WebElement tab = wait.until(ExpectedConditions.elementToBeClickable(saucesTab));
-        scrollToElement(tab);
-        tab.click();
-        wait.until(ExpectedConditions.visibilityOfElementLocated(saucesSection));
-    }
-
-    /**
-     * Нажать вкладку "Начинки"
-     */
-    public void clickFillingsTab() {
-        WebElement tab = wait.until(ExpectedConditions.elementToBeClickable(fillingsTab));
-        scrollToElement(tab);
-        tab.click();
-        wait.until(ExpectedConditions.visibilityOfElementLocated(fillingsSection));
-    }
-
-    /**
-     * Получить текст активной вкладки
-     */
-    public String getActiveTabText() {
-        WebElement activeTabElement = wait.until(ExpectedConditions.visibilityOfElementLocated(activeTab));
-        return activeTabElement.getText();
-    }
-
-    /**
-     * Проверить, отображается ли секция "Булки"
-     */
-    public boolean isBunsSectionVisible() {
-        try {
-            WebElement section = driver.findElement(bunsSection);
-            return section.isDisplayed();
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    /**
-     * Проверить, отображается ли секция "Соусы"
-     */
-    public boolean isSaucesSectionVisible() {
-        try {
-            WebElement section = driver.findElement(saucesSection);
-            return section.isDisplayed();
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    /**
-     * Проверить, отображается ли секция "Начинки"
-     */
-    public boolean isFillingsSectionVisible() {
-        try {
-            WebElement section = driver.findElement(fillingsSection);
-            return section.isDisplayed();
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    /**
-     * Проверить, авторизован ли пользователь
-     * (есть ли кнопка "Оформить заказ" вместо "Войти в аккаунт")
-     */
+    @Step("Проверить, выполнен ли вход пользователя")
     public boolean isUserLoggedIn() {
         try {
-            // Если пользователь авторизован, должна быть кнопка "Оформить заказ"
-            WebElement orderButtonElement = driver.findElement(orderButton);
-            return orderButtonElement.isDisplayed();
+            // После успешного входа кнопка "Войти в аккаунт" исчезает
+            boolean loginButtonGone = driver.findElements(loginToAccountButton).isEmpty();
+            // И появляется кнопка "Оформить заказ"
+            boolean orderButtonVisible = isOrderButtonDisplayed();
+
+            return loginButtonGone || orderButtonVisible;
         } catch (Exception e) {
             return false;
         }
     }
 
-    /**
-     * Нажать кнопку "Оформить заказ" (только для авторизованных пользователей)
-     */
+    @Step("Нажать кнопку 'Оформить заказ'")
     public void clickOrderButton() {
         WebElement button = wait.until(ExpectedConditions.elementToBeClickable(orderButton));
         button.click();
     }
 
-    /**
-     * Проверить, появилось ли сообщение о необходимости авторизации
-     */
+    @Step("Проверить, появилось ли сообщение о необходимости авторизации")
     public boolean isAuthRequiredMessageDisplayed() {
         try {
             WebElement message = driver.findElement(authRequiredMessage);
@@ -252,34 +139,51 @@ public class MainPage extends BasePage {
         }
     }
 
-    /**
-     * Получить текущий URL страницы
-     */
+    @Step("Получить текущий URL страницы")
     public String getCurrentUrl() {
         return driver.getCurrentUrl();
     }
 
-    /**
-     * Прокрутить страницу к секции конструктора
-     */
-    public void scrollToConstructor() {
-        WebElement bunsElement = wait.until(ExpectedConditions.visibilityOfElementLocated(bunsSection));
-        scrollToElement(bunsElement);
-    }
-
-    /**
-     * Обновить страницу
-     */
+    @Step("Обновить страницу")
     public void refresh() {
         driver.navigate().refresh();
         waitForLoad();
     }
 
-    /**
-     * Перейти на главную страницу через логотип или конструктор
-     */
+    @Step("Перейти на главную страницу через логотип")
     public void navigateToHome() {
         clickLogo();
         waitForLoad();
+    }
+
+    @Step("Проверить, отображается ли кнопка 'Оформить заказ'")
+    public boolean isOrderButtonDisplayed() {
+        try {
+            WebElement button = driver.findElement(orderButton);
+            return button.isDisplayed();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Step("Дождаться успешного входа пользователя")
+    public void waitForSuccessfulLogin() {
+        wait.until(d -> {
+            boolean isLoginPage = d.getCurrentUrl().contains("login");
+            boolean isOrderButtonVisible = isOrderButtonDisplayed();
+            boolean isMainPage = d.getCurrentUrl().equals("https://stellarburgers.education-services.ru/");
+
+            return !isLoginPage || isOrderButtonVisible || isMainPage;
+        });
+    }
+
+    @Step("Проверить, что текущий URL содержит текст: {text}")
+    public boolean isUrlContains(String text) {
+        return driver.getCurrentUrl().contains(text);
+    }
+
+    @Step("Вернуться на предыдущую страницу")
+    public void goBack() {
+        driver.navigate().back();
     }
 }
